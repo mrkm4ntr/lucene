@@ -493,6 +493,7 @@ public final class Lucene95HnswVectorsReader extends KnnVectorsReader implements
     int arc;
     private final DirectMonotonicReader graphLevelNodeOffsets;
     private final long[] graphLevelNodeIndexOffsets;
+    private final int maxConn;
     // Allocated to be M*2 to track the current neighbors being explored
     private int[] currentNeighborsBuffer;
 
@@ -508,6 +509,7 @@ public final class Lucene95HnswVectorsReader extends KnnVectorsReader implements
       this.graphLevelNodeOffsets =
           DirectMonotonicReader.getInstance(entry.offsetsMeta, addressesData);
       this.currentNeighborsBuffer = new int[entry.M * 2];
+      this.maxConn = entry.M;
       graphLevelNodeIndexOffsets = new long[numLevels];
       graphLevelNodeIndexOffsets[0] = 0;
       for (int i = 1; i < numLevels; i++) {
@@ -563,6 +565,16 @@ public final class Lucene95HnswVectorsReader extends KnnVectorsReader implements
     @Override
     public int entryNode() throws IOException {
       return entryNode;
+    }
+
+    @Override
+    public int neighborCount() {
+      return arcCount;
+    }
+
+    @Override
+    public int maxConn() {
+      return maxConn;
     }
 
     @Override

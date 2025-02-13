@@ -29,6 +29,7 @@ import java.util.SplittableRandom;
 import java.util.concurrent.TimeUnit;
 import org.apache.lucene.search.KnnCollector;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.knn.KnnSearchStrategy;
 import org.apache.lucene.util.FixedBitSet;
 import org.apache.lucene.util.InfoStream;
 import org.apache.lucene.util.hnsw.HnswUtil.Component;
@@ -579,6 +580,11 @@ public class HnswGraphBuilder implements HnswBuilder {
     @Override
     public TopDocs topDocs() {
       throw new IllegalArgumentException();
+    }
+
+    @Override
+    public KnnSearchStrategy getSearchStrategy() {
+      throw new IllegalArgumentException("Should not use unique strategy during graph building");
     }
   }
 }
