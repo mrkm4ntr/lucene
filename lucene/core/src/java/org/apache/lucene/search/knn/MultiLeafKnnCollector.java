@@ -22,6 +22,7 @@ import org.apache.lucene.search.KnnCollector;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.hnsw.BlockingFloatHeap;
 import org.apache.lucene.util.hnsw.FloatHeap;
+import org.apache.lucene.search.knn.KnnSearchStrategy;
 
 /**
  * MultiLeafKnnCollector is a specific KnnCollector that can exchange the top collected results
@@ -135,6 +136,11 @@ public final class MultiLeafKnnCollector implements KnnCollector {
   @Override
   public TopDocs topDocs() {
     return subCollector.topDocs();
+  }
+
+  @Override
+  public KnnSearchStrategy getSearchStrategy() {
+    return subCollector.getSearchStrategy();
   }
 
   @Override

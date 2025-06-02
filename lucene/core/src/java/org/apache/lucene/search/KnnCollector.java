@@ -17,6 +17,8 @@
 
 package org.apache.lucene.search;
 
+import org.apache.lucene.search.knn.KnnSearchStrategy;
+
 /**
  * KnnCollector is a knn collector used for gathering kNN results and providing topDocs from the
  * gathered neighbors

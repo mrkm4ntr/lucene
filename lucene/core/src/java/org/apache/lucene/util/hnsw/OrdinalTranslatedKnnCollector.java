@@ -20,7 +20,7 @@ package org.apache.lucene.util.hnsw;
 import org.apache.lucene.search.KnnCollector;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TotalHits;
-
+import org.apache.lucene.search.knn.KnnSearchStrategy;
 /**
  * Wraps a provided KnnCollector object, translating the provided vectorId ordinal to a documentId
  */
@@ -79,5 +79,10 @@ public final class OrdinalTranslatedKnnCollector implements KnnCollector {
                 ? TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO
                 : TotalHits.Relation.EQUAL_TO),
         td.scoreDocs);
+  }
+
+  @Override
+  public KnnSearchStrategy getSearchStrategy() {
+    return in.getSearchStrategy();
   }
 }

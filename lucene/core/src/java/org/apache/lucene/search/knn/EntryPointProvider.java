@@ -14,33 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.lucene.search.knn;
 
-repositories {
-  mavenCentral()
-}
+import org.apache.lucene.search.DocIdSetIterator;
 
-ext {
-  // Minimum Java version required to compile buildSrc.
-  minJavaVersion = JavaVersion.VERSION_16
-}
+/** Provides entry points for the kNN search */
+public interface EntryPointProvider {
+  /** Iterator of valid entry points for the kNN search */
+  DocIdSetIterator entryPoints();
 
-
-// Make sure the build environment is consistent.
-apply from: file('../gradle/validation/check-environment.gradle')
-
-// Load common buildSrc and script deps.
-apply from: file("scriptDepVersions.gradle")
-
-dependencies {
-  implementation gradleApi()
-  implementation localGroovy()
-
-  implementation "commons-codec:commons-codec:${scriptDepVersions['commons-codec']}"
-}
-
-if (!rootProject.hasJavaFlightRecorder) {
-  logger.warn('Module jdk.jfr is not available; skipping compilation of Java Flight Recorder support.')
-  tasks.named('compileJava').configure {
-    exclude('**/ProfileResults.java')
-  }
+  /** Number of valid entry points for the kNN search */
+  int numberOfEntryPoints();
 }

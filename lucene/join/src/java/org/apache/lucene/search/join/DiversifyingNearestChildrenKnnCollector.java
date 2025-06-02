@@ -42,7 +42,7 @@ class DiversifyingNearestChildrenKnnCollector extends AbstractKnnCollector {
    * @param parentBitSet The leaf parent bitset
    */
   public DiversifyingNearestChildrenKnnCollector(int k, int visitLimit, BitSet parentBitSet) {
-    super(k, visitLimit);
+    super(k, visitLimit, null);
     this.parentBitSet = parentBitSet;
     this.heap = new NodeIdCachingHeap(k);
   }

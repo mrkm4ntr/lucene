@@ -20,8 +20,11 @@ package org.apache.lucene.util.hnsw;
 import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
 
 import java.io.IOException;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.KnnCollector;
 import org.apache.lucene.search.TopKnnCollector;
+import org.apache.lucene.search.knn.EntryPointProvider;
+import org.apache.lucene.search.knn.KnnSearchStrategy;
 import org.apache.lucene.util.BitSet;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.FixedBitSet;
@@ -97,38 +100,48 @@ public class HnswGraphSearcher {
     KnnSearchStrategy.Hnsw hnswStrategy;
     if (knnCollector.getSearchStrategy() instanceof KnnSearchStrategy.Hnsw hnsw) {
       hnswStrategy = hnsw;
-    } else if (knnCollector.getSearchStrategy() instanceof KnnSearchStrategy.Seeded seeded
-        && seeded.originalStrategy() instanceof KnnSearchStrategy.Hnsw hnsw) {
-      hnswStrategy = hnsw;
     } else {
       hnswStrategy = KnnSearchStrategy.Hnsw.DEFAULT;
     }
-    final AbstractHnswGraphSearcher innerSearcher;
+    final HnswGraphSearcher graphSearcher;
     // First, check if we should use a filtered searcher
     if (acceptOrds != null
         // We can only use filtered search if we know the maxConn
         && graph.maxConn() != HnswGraph.UNKNOWN_MAX_CONN
         && filteredDocCount > 0
         && hnswStrategy.useFilteredSearch((float) filteredDocCount / graph.size())) {
-      innerSearcher =
+      graphSearcher =
           FilteredHnswGraphSearcher.create(knnCollector.k(), graph, filteredDocCount, acceptOrds);
     } else {
-      innerSearcher =
+      graphSearcher =
           new HnswGraphSearcher(
               new NeighborQueue(knnCollector.k(), true),
               new SparseFixedBitSet(getGraphSize(graph)));
     }
-    // Then, check if we the search strategy is seeded
-    final AbstractHnswGraphSearcher graphSearcher;
-    if (knnCollector.getSearchStrategy() instanceof KnnSearchStrategy.Seeded seeded
-        && seeded.numberOfEntryPoints() > 0) {
-      graphSearcher =
-          SeededHnswGraphSearcher.fromEntryPoints(
-              innerSearcher, seeded.numberOfEntryPoints(), seeded.entryPoints(), graph.size());
+    final int[] entryPoints;
+    if (knnCollector instanceof EntryPointProvider epp) {
+      if (epp.numberOfEntryPoints() <= 0) {
+        throw new IllegalArgumentException("The number of entry points must be > 0");
+      }
+      DocIdSetIterator eps = epp.entryPoints();
+      entryPoints = new int[epp.numberOfEntryPoints()];
+      int idx = 0;
+      while (idx < entryPoints.length) {
+        int entryPointOrdInt = eps.nextDoc();
+        if (entryPointOrdInt == NO_MORE_DOCS) {
+          throw new IllegalArgumentException(
+              "The number of entry points provided is less than the number of entry points requested");
+        }
+        assert entryPointOrdInt < getGraphSize(graph);
+        entryPoints[idx++] = entryPointOrdInt;
+      }
+      // This is an invalid case, but we should check it
+      assert entryPoints.length > 0;
+      // We use provided entry point ordinals to search the complete graph (level 0)
+      graphSearcher.searchLevel(knnCollector, scorer, 0, entryPoints, graph, acceptOrds);
     } else {
-      graphSearcher = innerSearcher;
+      search(scorer, knnCollector, graph, graphSearcher, acceptOrds);
     }
-    graphSearcher.search(knnCollector, scorer, graph, acceptOrds);
   }
 
   /**

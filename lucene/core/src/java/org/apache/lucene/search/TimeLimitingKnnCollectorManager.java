@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.QueryTimeout;
 import org.apache.lucene.search.knn.KnnCollectorManager;
+import org.apache.lucene.search.knn.KnnSearchStrategy;
 
 /** A {@link KnnCollectorManager} that collects results with a timeout. */
 public class TimeLimitingKnnCollectorManager implements KnnCollectorManager {
@@ -37,8 +38,9 @@ public class TimeLimitingKnnCollectorManager implements KnnCollectorManager {
   }
 
   @Override
-  public KnnCollector newCollector(int visitedLimit, LeafReaderContext context) throws IOException {
-    KnnCollector collector = delegate.newCollector(visitedLimit, context);
+  public KnnCollector newCollector(
+    int visitedLimit, KnnSearchStrategy searchStrategy, LeafReaderContext context) throws IOException {
+    KnnCollector collector = delegate.newCollector(visitedLimit, searchStrategy, context);
     if (queryTimeout == null) {
       return collector;
     }
@@ -98,6 +100,11 @@ public class TimeLimitingKnnCollectorManager implements KnnCollectorManager {
               : docs.totalHits.relation;
 
       return new TopDocs(new TotalHits(docs.totalHits.value, relation), docs.scoreDocs);
+    }
+
+    @Override
+    public KnnSearchStrategy getSearchStrategy() {
+      return collector.getSearchStrategy();
     }
   }
 }
